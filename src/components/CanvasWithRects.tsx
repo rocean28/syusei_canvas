@@ -163,12 +163,13 @@ const CanvasWithRects: React.FC<Props> = ({
             ref={imageRef}
             className="uploaded-image"
             onError={(e) => {
-              e.target.onerror = null;
-              e.target.style.display = 'none'; // 画像を非表示にする
+              const img = e.target as HTMLImageElement;
+              img.onerror = null;
+              img.style.display = 'none';
               const fallback = document.createElement('div');
               fallback.textContent = '画像が見つかりません。';
               fallback.className = 'h-full flex-center text-gray fsz-14';
-              e.target.parentNode?.appendChild(fallback);
+              img.parentNode?.appendChild(fallback);
             }}
           />
         </div>

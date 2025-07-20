@@ -128,12 +128,13 @@ const ListPage: React.FC = () => {
                         alt=""
                         className="object-fit object-cover object-top rounded"
                         onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.style.display = 'none';
+                          const img = e.target as HTMLImageElement;
+                          img.onerror = null;
+                          img.style.display = 'none';
                           const fallback = document.createElement('div');
                           fallback.textContent = '(˙◁˙)';
                           fallback.className = 'text-lightgray fsz-20';
-                          e.target.parentNode?.appendChild(fallback);
+                          img.parentNode?.appendChild(fallback);
                         }}
                       />
                     );
