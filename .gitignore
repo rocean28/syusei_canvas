@@ -28,5 +28,6 @@ dist-ssr
 /uploads/*
 !/uploads/.gitkeep
 **/database.*
+**/backup/*
 memo.txt
 manual
