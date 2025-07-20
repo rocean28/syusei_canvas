@@ -1,0 +1,246 @@
+@use "sass:list";
+@use "sass:meta";
+@use "sass:color";
+@use 'sass:map';
+
+/* settings
+------------------------------*/
+$colors: (
+  gray: #767676,
+  lightgray: #eeeee9,
+  red: #db3939,
+  siteColor: #023e7c,
+  yellow: #ffe100,
+  blue: #155dfc,
+  mint: rgb(25, 173, 173),
+);
+
+$basse_font: 'Noto Sans JP', sans-serif;
+$design_font: "Zen Maru Gothic", sans-serif;
+
+/* layout
+------------------------------*/
+.container {
+  max-width: 1230px;
+  margin-inline: auto;
+  padding-inline: 15px;
+}
+.block {
+  display: block;
+}
+.flex {
+  display: flex;
+}
+.flex-center {
+  display: flex;
+	justify-content: center;
+	align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-end {
+  justify-content: flex-end;
+}
+.items-center {
+  align-items: center;
+}
+.items-end {
+  align-items: flex-end;
+}
+.flex-row-reverse {
+  flex-direction: row-reverse;
+}
+.flex-column {
+  flex-direction: column;
+}
+.flex-column-reverse {
+  flex-direction: column-reverse;
+}
+.flex-grow {
+  flex-grow: 1;
+}
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+@for $i from 1 through 50 {
+  $val: $i * 5;
+  .gap-#{$val}   {gap: #{$val}px; }
+}
+
+/* width
+------------------------------*/
+.w-full {
+  width: 100%;
+}
+.w-fit {
+  width: fit-content;
+}
+@for $i from 1 through 40 {
+  $val: $i * 50;
+  .w-#{$val}   {width: 100%; max-width: #{$val}px; }
+}
+.mw-1000 {
+  min-width: 1000px;
+}
+
+/* height
+------------------------------*/
+.h-full {
+  height: 100%;
+}
+
+/* margin & padding
+------------------------------*/
+$step: 1;
+$range: 0 50;
+$dirs: (
+  "":  (),
+  "t": "top",
+  "b": "bottom",
+  "l": "left",
+  "r": "right",
+  "x": "inline",
+  "y": ("top", "bottom")
+);
+
+$props: (
+  "p": "padding",
+  "m": "margin"
+);
+
+@for $i from list.nth($range, 1) through list.nth($range, 2) {
+  $val: $i * $step;
+  @each $pShort, $pLong in $props {
+    @each $dShort, $dLong in $dirs {
+      $class: ".#{$pShort}#{$dShort}-#{$val}";
+      #{$class} {
+        @if list.length($dLong) == 0 {
+          #{$pLong}: #{$val}px;
+        } @else if meta.type-of($dLong) == "list" {
+          @each $side in $dLong {
+            #{$pLong}-#{$side}: #{$val}px;
+          }
+        } @else {
+          #{$pLong}-#{$dLong}: #{$val}px;
+        }
+      }
+    }
+  }
+}
+// auto
+@each $dShort, $dLong in $dirs {
+  .m#{$dShort}-auto {
+    @if list.length($dLong) == 0 {
+      margin: auto;
+    } @else if meta.type-of($dLong) == "list" {
+      @each $side in $dLong {
+        margin-#{$side}: auto;
+      }
+    } @else {
+      margin-#{$dLong}: auto;
+    }
+  }
+}
+
+
+/* font
+------------------------------*/
+.design-font {
+  font-family: $design_font;
+}
+@for $i from 10 through 100 {
+  $val: $i * 0.1;
+  .fsz-#{$i}   {font-size: #{$val}rem; }
+}
+
+.fw-400 {
+  font-weight: 400;
+}
+.fw-700 {
+  font-weight: 700;
+}
+
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+
+@each $name, $color in $colors {
+  .text-#{"" + $name} {
+    color: $color;
+  }
+}
+
+/*
+------------------------------*/
+.border-gray {
+  border: 1px solid map.get($colors, lightgray);
+}
+
+/* shadow
+------------------------------*/
+@mixin shadow($color: #000) {
+  box-shadow: 0 1px 3px 0 rgba($color, 0.1), 0 1px 2px -1px rgba($color, 0.1);
+}
+.shadow {
+  @include shadow;
+}
+
+/* background
+------------------------------*/
+.bg-white {
+  background: #fff;
+}
+.bg-gray {
+  background: map.get($colors, gray);
+}
+.bg-lightgray {
+  background: map.get($colors, lightgray);
+}
+
+/* round
+------------------------------*/
+.rounded {
+  border-radius: 4px;
+}
+
+/* other
+------------------------------*/
+.object-fit {
+  width: 100%;
+  height: 100%;
+}
+.object-contain {
+  object-fit: contain;
+}
+.object-cover {
+  object-fit: cover;
+}
+.object-top {
+  object-position: top center;
+}
+.hidden {
+  display: none!important;
+}
+.relative {
+  position: relative;
+}
+.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.ofh {
+  overflow: hidden;
+}
+.pointer {
+  &:hover {
+    cursor: pointer;
+  }
+}

@@ -1,0 +1,22 @@
+.app-root {
+  font-family: sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.main-layout {
+  display: flex;
+  gap: 1rem;
+}
+
+.left-pane {
+  flex: 1;
+  position: relative;
+}
+
+img {
+  user-drag: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
