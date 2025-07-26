@@ -1,14 +1,10 @@
 <?php
-// ログ出力
-// ini_set('display_errors', 0);
-// ini_set('log_errors', 1);
-// ini_set('error_log', __DIR__ . '/../../logs/php_error.log');
-// error_reporting(E_ALL);
+// エラーログ出力設定（必要に応じてON）
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../../logs/delete_error.log');
 
 require_once __DIR__ . '/../common.php';
 
-/* 処理
-------------------------------*/
 try {
   $json = file_get_contents('php://input');
   $data = json_decode($json, true);
@@ -17,16 +13,13 @@ try {
   }
 
   $id = $data['id'];
+  $createdAt = $data['created_at'] ?? null;
 
-  // 画像削除
-  $createdAt = $data['created_at'];
-  $datetime = new DateTime($createdAt);
-  $Y = $datetime->format('Y');
-  $mm = $datetime->format('m');
-  $uploadDir = __DIR__ . "/../../uploads/{$Y}/{$mm}/{$id}/";
-  if (is_dir($uploadDir)) {
-    deleteDirRecursive($uploadDir);
+  if (!$createdAt) {
+    throw new Exception('作成日時が指定されていません');
   }
+
+  $db->beginTransaction();
 
   // instructions 削除
   $stmt = $db->prepare('DELETE FROM instructions WHERE image_id IN (SELECT id FROM images WHERE group_id = ?)');
@@ -40,8 +33,26 @@ try {
   $stmt = $db->prepare('DELETE FROM posts WHERE id = ?');
   $stmt->execute([$id]);
 
+  // トランザクション確定
+  $db->commit();
+
+  // 画像ディレクトリ削除（DBと切り離して別処理として扱う）
+  $datetime = new DateTime($createdAt);
+  $Y = $datetime->format('Y');
+  $mm = $datetime->format('m');
+  $uploadDir = __DIR__ . "/../../uploads/{$Y}/{$mm}/{$id}/";
+
+  if (is_dir($uploadDir)) {
+    deleteDirRecursive($uploadDir);
+  }
+
   echo json_encode(['success' => true]);
 } catch (Exception $e) {
+  if (isset($db) && $db->inTransaction()) {
+    $db->rollBack();
+  }
+
+  error_log('削除処理エラー: ' . $e->getMessage());
   http_response_code(500);
   echo json_encode(['success' => false, 'error' => $e->getMessage()]);
   exit;
@@ -57,8 +68,12 @@ function deleteDirRecursive($dir) {
     if (is_dir($path)) {
       deleteDirRecursive($path);
     } else {
-      unlink($path);
+      if (!unlink($path)) {
+        error_log("ファイル削除失敗: $path");
+      }
     }
   }
-  rmdir($dir);
+  if (!rmdir($dir)) {
+    error_log("ディレクトリ削除失敗: $dir");
+  }
 }

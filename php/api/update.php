@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/../common.php';
 
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../../logs/update_error.log');
+
 try {
   $json = file_get_contents('php://input');
   $data = json_decode($json, true);
@@ -14,6 +17,8 @@ try {
 
   $updatedAt = $data['updated_at'] ?? date('Y-m-d H:i:s');
   $updatedBy = $data['updated_by'] ?? 'guest';
+
+  $db->beginTransaction();
 
   // posts UPDATE（created_xxxは触らない）
   $stmt = $db->prepare('UPDATE posts SET title = ?, updated_at = ?, updated_by = ? WHERE id = ?');
@@ -70,8 +75,8 @@ try {
   }
 
   // 投稿日時から年・月を取得（なければ現在時刻で代用）
-  $updatedAt = $data['created_at'] ?? date('Y-m-d H:i:s');
-  $datetime = new DateTime($updatedAt);
+  $createdAt = $data['created_at'] ?? date('Y-m-d H:i:s');
+  $datetime = new DateTime($createdAt);
   $Y = $datetime->format('Y');
   $mm = $datetime->format('m');
 
@@ -80,15 +85,9 @@ try {
 
   // ディレクトリが存在する場合のみ処理
   if (is_dir($uploadDir)) {
-    // フォルダ内の画像ファイルを取得
     $existingFiles = array_diff(scandir($uploadDir), ['.', '..']);
+    $usedFiles = array_map(fn($img) => $img['image'], $data['images']);
 
-    // payloadに含まれるファイル名を取得（例: img_xxxxx.jpg）
-    $usedFiles = array_map(function ($img) {
-      return $img['image'];
-    }, $data['images']);
-
-    // 差分（削除対象のファイル）を取得して削除
     foreach ($existingFiles as $file) {
       if (!in_array($file, $usedFiles, true)) {
         $fullPath = $uploadDir . $file;
@@ -99,8 +98,15 @@ try {
     }
   }
 
+  $db->commit();
   echo json_encode(['success' => true, 'id' => $groupId]);
+
 } catch (Exception $e) {
+  if (isset($db) && $db->inTransaction()) {
+    $db->rollBack();
+  }
+
+  error_log('更新処理エラー: ' . $e->getMessage());
   http_response_code(500);
   echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }

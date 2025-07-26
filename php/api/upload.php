@@ -16,12 +16,12 @@ ini_set('memory_limit', '1024M');
 require_once __DIR__ . '/../common.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-  echo json_encode(['success' => false, 'error' => 'Invalid request', 'filename' => null]);
+  echo json_encode(['success' => false, 'error' => 'Invalid request', 'group_id' => $_POST['group_id']]);
   exit;
 }
 
 if (!isset($_POST['group_id'])) {
-  echo json_encode(['success' => false, 'error' => 'IDが指定されていません', 'filename' => null]);
+  echo json_encode(['success' => false, 'error' => 'IDが指定されていません', 'group_id' => $_POST['group_id']]);
   exit;
 }
 
@@ -36,7 +36,7 @@ $finalFilename = null;
 
 foreach ($_FILES as $key => $file) {
   if ($file['error'] !== UPLOAD_ERR_OK) {
-    $result[] = ['file' => $key, 'success' => false, 'error' => 'アップロードエラー'];
+    $result[] = ['file' => $key, 'success' => false, 'error' => $file['error']];
     continue;
   }
 
@@ -118,5 +118,6 @@ foreach ($_FILES as $key => $file) {
 echo json_encode([
   'success' => true,
   'results' => $result,
-  'filename' => $finalFilename
+  'filename' => $finalFilename,
+  'group_id' => $groupId,
 ]);

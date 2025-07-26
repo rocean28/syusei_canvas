@@ -21,6 +21,7 @@ type Props = EditorModeProps;
 const Editor: React.FC<Props> = ({ mode }) => {
   const [images, setImages] = useState<ImageWithInstructions[]>([]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
+  const [nextActiveId, setNextActiveId] = useState<string | null>(null);
   const [title, setTitle] = useState<string>('');
   const params = useParams();
   const navigate = useNavigate();
@@ -177,6 +178,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
 
           const result = await res.json();
           if (result.success && result.filename) {
+            // console.log('アップロード成功:', result);
             return {
               ...img,
               image: result.filename,
@@ -271,11 +273,16 @@ const Editor: React.FC<Props> = ({ mode }) => {
     setImages((prev) => {
       const filtered = prev.filter((img) => img.id !== activeImageId);
       const nextId = filtered[0]?.id ?? null;
-      setActiveImageId(nextId);
-
+      setNextActiveId(nextId);
       return filtered;
     });
   };
+  useEffect(() => {
+    if (nextActiveId !== null) {
+      setActiveImageId(nextActiveId);
+      setNextActiveId(null);
+    }
+  }, [nextActiveId]);
 
   const handleDeleteRequest = async () => {
     if (!id) return;
@@ -361,7 +368,6 @@ const Editor: React.FC<Props> = ({ mode }) => {
       alert('ロック作成に失敗しました');
     }
   };
-  // 編集画面ロックのチェック
   useEffect(() => {
     const checkLockStatus = async () => {
       try {
@@ -383,8 +389,10 @@ const Editor: React.FC<Props> = ({ mode }) => {
     };
 
     if (mode === 'edit') {
-      checkLockStatus();
       lockEditor();
+      setTimeout(async () => {
+        checkLockStatus();
+      }, 1000);
     }
   }, [mode, id, currentUser.name]);
 
@@ -414,7 +422,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
   }, [mode, id, getCurrentUser]);
 
   const cancelEdit = async () => {
-    const confirmCancel = window.confirm('編集した内容が失われます。よろしいですか？');
+    const confirmCancel = window.confirm('変更内容が失われます。よろしいですか？');
     if (!confirmCancel) return;
 
     try {

@@ -13,7 +13,7 @@ $dbPath = __DIR__ . '/database.sqlite';
 $now = date('Ymd_His');
 
 $backupDir = __DIR__ . "/backup/{$now}";
-$backupFileName = "database_backup_{$now}.sqlite";
+$backupFileName = "database.sqlite";
 $backupPath = $backupDir . "/{$backupFileName}";
 
 // エラーログ出力設定（任意）
@@ -31,52 +31,55 @@ if (!is_dir($backupDir)) {
   mkdir($backupDir, 0755, true);
 }
 
-// バックアップ本体
-if (copy($dbPath, $backupPath)) {
-  output("バックアップ成功: $backupPath");
+// バックアップ用に接続
+try {
+  $source = new SQLite3($dbPath, SQLITE3_OPEN_READONLY);
+  $dest = new SQLite3($backupPath, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
 
-  // -wal / -shm もコピー
-  foreach (['-wal', '-shm'] as $suffix) {
-    $src = $dbPath . $suffix;
-    $dst = $backupPath . $suffix;
-    if (file_exists($src)) {
-      if (!copy($src, $dst)) {
-        output("  → {$suffix} のコピーに失敗しました");
-      }
-    }
+  if (!$source) {
+    die("SQLite 3データベースに接続できません: " . $source->lastErrorMsg());
   }
 
-  // 圧縮処理（Zip化）
-  $zipPath = $backupDir . ".zip";
-  $zip = new ZipArchive();
-  if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE)) {
-    $files = glob($backupDir . '/*');
-    foreach ($files as $file) {
-      $localName = basename($file);
-      $zip->addFile($file, $localName);
-    }
-    $zip->close();
-    output("→ 圧縮完了: {$zipPath}");
-
-    // ZIP後に元ファイル削除
-    foreach ($files as $file) {
-      unlink($file);
-    }
-    rmdir($backupDir);
+  if ($source->backup($dest)) {
+    output("バックアップ成功（SQLite3::backup）: $backupPath");
   } else {
-    output("→ ZIPの作成に失敗しました");
+    output("バックアップ失敗（SQLite3::backup）");
+    exit;
   }
 
+  $source->close();
+  $dest->close();
+
+} catch (Exception $e) {
+  output("バックアップ中にエラー発生: " . $e->getMessage());
+  exit;
+}
+
+// 圧縮処理（Zip化）
+$zipPath = $backupDir . ".zip";
+$zip = new ZipArchive();
+if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE)) {
+  $files = glob($backupDir . '/*');
+  foreach ($files as $file) {
+    $localName = basename($file);
+    $zip->addFile($file, $localName);
+  }
+  $zip->close();
+  output("→ 圧縮完了: {$zipPath}");
+
+  // ZIP後に元ファイル削除
+  foreach ($files as $file) {
+    unlink($file);
+  }
+  rmdir($backupDir);
 } else {
-  output("バックアップ失敗");
+  output("→ ZIPの作成に失敗しました");
 }
 
 // 古いバックアップZIP削除（3ヶ月より前）
 $expireTime = strtotime('-3 months');
 foreach (glob(__DIR__ . '/backup/*.zip') as $zipFile) {
   $basename = basename($zipFile, '.zip');
-
-  // 例: 20250720_123456 → "20250720" 抽出
   if (preg_match('/^(\d{8})_\d{6}$/', $basename, $matches)) {
     $datePart = $matches[1];
     $fileTime = strtotime($datePart);

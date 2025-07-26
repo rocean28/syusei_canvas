@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { env } from '@/config/env';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowUp, faArrowDown, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faSearch } from '@fortawesome/free-solid-svg-icons';
 
 const ListPage: React.FC = () => {
   const [items, setItems] = useState<Item[]>([]);
@@ -101,7 +101,7 @@ const ListPage: React.FC = () => {
             className="flex items-center gap-5 pointer"
             onClick={() => setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))}
           >
-            <FontAwesomeIcon icon={sortOrder === 'asc' ? faArrowUp : faArrowDown} />
+            <FontAwesomeIcon icon={sortOrder === 'asc' ? faSort : faSort} />
             <span className="fsz-11">{sortOrder === 'asc' ? '古い順' : '新しい順'}</span>
           </div>
           <div className="fsz-14 text-gray mb-2 ml-auto mr-10">

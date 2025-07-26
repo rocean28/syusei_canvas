@@ -1,8 +1,10 @@
 <?php
 require_once __DIR__ . '/../common.php';
 
-/* 処理
-------------------------------*/
+// エラーログ出力先（必要に応じて調整）
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../../logs/save_error.log');
+
 try {
   $json = file_get_contents('php://input');
   $data = json_decode($json, true);
@@ -14,8 +16,10 @@ try {
   $category = trim($data['category'] ?? 'no_category');
   if ($title === '') $title = '無題の修正指示';
 
+  $db->beginTransaction();
+
   // posts テーブル保存
-  $stmt = $db->prepare('INSERT OR REPLACE INTO posts (id, title, category, created_at, updated_at, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?)');
+  $stmt = $db->prepare('INSERT OR REPLACE INTO posts (id, title, category, created_at, updated_at, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?)');
   $stmt->execute([
     $id,
     $title,
@@ -58,14 +62,22 @@ try {
         $inst['width'], $inst['height'],
         $inst['text'] ?? '',
         $inst['comment'] ?? '',
-        $inst['is_fixed'] ? 1 : 0,
-        $inst['is_ok'] ? 1 : 0,
+        !empty($inst['is_fixed']) ? 1 : 0,
+        !empty($inst['is_ok']) ? 1 : 0,
       ]);
     }
   }
 
+  $db->commit();
   echo json_encode(['success' => true, 'id' => $id]);
 } catch (Exception $e) {
+  if ($db->inTransaction()) {
+    $db->rollBack();
+  }
+
+  // ログ出力
+  error_log("保存処理エラー: " . $e->getMessage());
+
   http_response_code(500);
   echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
