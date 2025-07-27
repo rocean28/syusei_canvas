@@ -22,6 +22,7 @@ const LoginPage: React.FC = () => {
       });
 
       const data = await res.json();
+      // console.log(data);
 
       if (res.ok && data.success) {
         navigate('/create');

@@ -1,6 +1,6 @@
 <?php
 // モード切替（'save' | 'light' | 'webp'）
-$mode = 'webp';
+$mode = 'save';
 // 品質（0～100）
 $quality = 80;
 
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 if (!isset($_POST['group_id'])) {
-  echo json_encode(['success' => false, 'error' => 'IDが指定されていません', 'group_id' => $_POST['group_id']]);
+  echo json_encode(['success' => false, 'error' => 'IDがありません', 'group_id' => $_POST['group_id']]);
   exit;
 }
 
