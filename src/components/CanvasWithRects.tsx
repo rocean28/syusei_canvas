@@ -156,7 +156,7 @@ const CanvasWithRects: React.FC<Props> = ({
       onMouseMove={handleMouseMove}
     >
       <div className="img-wrap relative">
-        <div className="h-full" ref={containerRef}>
+        <div className="" ref={containerRef}>
           <img
             src={imageUrl}
             alt="Uploaded"
