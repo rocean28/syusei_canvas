@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../common.php';
 
 // ログイン情報が必要
-session_start();
 $user = $_SESSION['user_name'] ?? '未ログイン';
 if (!isset($_SESSION['user_email'])) {
   http_response_code(401);
@@ -23,7 +22,7 @@ if ($id === '') {
 }
 
 // ロックファイルのパス
-$lockDir = __DIR__;
+$lockDir = __DIR__ . '/editing';
 $lockFile = "$lockDir/$id.json";
 
 // すでにロックされてるかチェック

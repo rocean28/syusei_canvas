@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../common.php';
 
-$lockDir = __DIR__;
+$lockDir = __DIR__ . '/editing';
 $files = glob("$lockDir/*.json");
 
 $unlocked = [];

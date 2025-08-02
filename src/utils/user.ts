@@ -14,6 +14,6 @@ export async function getCurrentUser(): Promise<User | null> {
     return currentUser;
   } catch (e) {
     console.error('ユーザー取得失敗:', e);
-    return { email: '', name: 'Guest' };
+    return { email: 'Guest', name: 'Guest' };
   }
 }

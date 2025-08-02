@@ -1,11 +1,28 @@
 <?php
-require_once __DIR__ . '/../common.php';
+// CORS対応（Originチェックはここで早めにやる）
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = [
+  'http://localhost:5173',
+  'https://syusei.lk-dev.net',
+];
+if (in_array($origin, $allowedOrigins, true)) {
+  header("Access-Control-Allow-Origin: $origin");
+  header("Access-Control-Allow-Credentials: true");
+  header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+  header("Access-Control-Allow-Headers: Content-Type");
+}
+
+// プリフライトリクエストはここで即終了（OPTIONSの前に認証チェック入れるな）
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+  http_response_code(200);
+  exit;
+}
 
 $expire_seconds = 60 * 60 * 24 * 30;
 
 $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
   || $_SERVER['SERVER_PORT'] == 443;
-$isLocal = in_array($_SERVER['HTTP_HOST'], ['localhost', '127.0.0.1', '127.0.0.1:32778']);
+$isLocal = in_array($_SERVER['HTTP_HOST'], ['localhost']);
 
 $useSecureCookie = !$isLocal && $isHttps;
 
@@ -18,6 +35,7 @@ session_set_cookie_params([
 ]);
 
 session_start();
+header('Content-Type: application/json');
 
 $users = include __DIR__ . '/users.php';
 // print_r($users);
@@ -38,7 +56,7 @@ if (isset($email) && password_verify($password, $users[$email]['password'])) {
     'user' => $_SESSION['user_name']
   ]);
 } else {
-  http_response_code(401);
+  // http_response_code(401);
   echo json_encode([
     'success' => false,
     'message' => 'ログイン失敗'

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { env } from '@/config/env';
 
@@ -7,6 +7,20 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch(`${env.authUrl}/check.php`, {
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.loggedIn) {
+          navigate('/');
+        } else {
+        }
+      })
+      .catch(() => navigate('/login'))
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,10 +36,10 @@ const LoginPage: React.FC = () => {
       });
 
       const data = await res.json();
-      // console.log(data);
 
       if (res.ok && data.success) {
-        navigate('/create');
+        console.log(data);
+        navigate('/');
       } else {
         setError(data.message || 'ログインに失敗しました');
         console.log(data);
@@ -40,7 +54,7 @@ const LoginPage: React.FC = () => {
       <h2 className="mb-30 text-center fsz-20 design-font fw-400">修正Canvas</h2>
       <form onSubmit={handleLogin} className="login-form card">
         <div className="mb-20">
-          <label htmlFor="username" className="block fsz-15">Email </label>
+          <label htmlFor="username" className="block mb-5 fsz-15">Email </label>
           <input
             id="username"
             type="text"
@@ -51,7 +65,7 @@ const LoginPage: React.FC = () => {
           />
         </div>
         <div className="mb-30">
-          <label htmlFor="username" className="block fsz-15">Password </label>
+          <label htmlFor="username" className="block mb-5 fsz-15">Password </label>
             <input
               id="password"
               type="password"

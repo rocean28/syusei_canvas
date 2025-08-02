@@ -10,7 +10,7 @@ import ImageUploader from '@/components/ImageUploader';
 import CanvasWithRects from '@/components/CanvasWithRects';
 import InstructionList from '@/components/InstructionList';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faCheck, faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { env } from '@/config/env';
 import { getCurrentUser } from '@/utils/user';
 import dayjs from 'dayjs';
@@ -578,6 +578,10 @@ const Editor: React.FC<Props> = ({ mode }) => {
                       {activeImage.url ? (
                         <a href={activeImage.url} className="" target="_blank" rel="noopener noreferrer">
                           {activeImage.url}
+                          <FontAwesomeIcon
+                            icon={faArrowUpRightFromSquare}
+                            className="ml-5 text-gray fsz-10"
+                          />
                         </a>
                       ) : (
                         ''

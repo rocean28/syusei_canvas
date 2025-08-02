@@ -10,7 +10,7 @@ if (!$id) {
   exit;
 }
 
-$lockFile = __DIR__ . "/$id.json";
+$lockFile = __DIR__ . "/editing/$id.json";
 
 if (file_exists($lockFile)) {
   unlink($lockFile);
