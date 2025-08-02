@@ -31,3 +31,5 @@ dist-ssr
 **/backup/*
 memo.txt
 manual
+
+/php/auth/users.php
