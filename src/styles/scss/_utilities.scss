@@ -6,6 +6,7 @@
 /* settings
 ------------------------------*/
 $colors: (
+  black: #333,
   gray: #767676,
   lightgray: #eeeee9,
   red: #db3939,
@@ -16,8 +17,12 @@ $colors: (
 );
 
 $basse_font: "Inter", sans-serif;
-$design_font: "Zen Maru Gothic", sans-serif;
-$num_font: "Poppins", sans-serif;
+// $design_font: "Zen Maru Gothic", sans-serif;
+$design_font: $basse_font;
+// $num_font: "Poppins", sans-serif;
+$num_font: $basse_font;
+
+$base_bg: #fafafa;
 
 /* layout
 ------------------------------*/
@@ -178,6 +183,10 @@ $props: (
   }
 }
 
+.underline {
+  text-decoration: underline;
+}
+
 /*
 ------------------------------*/
 .border-gray {
@@ -195,6 +204,9 @@ $props: (
 
 /* background
 ------------------------------*/
+.bg-base {
+  background: $base_bg;
+}
 .bg-white {
   background: #fff;
 }
@@ -209,6 +221,32 @@ $props: (
 ------------------------------*/
 .rounded {
   border-radius: 4px;
+}
+
+/* button
+------------------------------*/
+[class*='btn-'] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 15px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  line-height: 1;
+  color: #fff;
+  outline: none;
+  @each $name, $color in $colors {
+    &.btn-#{"" + $name} {
+      background: $color;
+      @if $name == lightgray {
+        color: #333;
+      }
+      &:hover {
+        background: color.adjust($color, $lightness: -10%);
+      }
+    }
+  }
 }
 
 /* other

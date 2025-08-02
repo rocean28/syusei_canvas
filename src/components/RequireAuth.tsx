@@ -16,7 +16,7 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         if (data.loggedIn) {
           setIsAuthenticated(true);
         } else {
-          // console.log(data);
+          console.log(data);
           navigate('/login');
         }
       })

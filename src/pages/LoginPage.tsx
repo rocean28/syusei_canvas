@@ -28,6 +28,7 @@ const LoginPage: React.FC = () => {
         navigate('/create');
       } else {
         setError(data.message || 'ログインに失敗しました');
+        console.log(data);
       }
     } catch (err) {
       setError('通信エラーが発生しました');
@@ -36,10 +37,10 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="login">
+      <h2 className="mb-30 text-center fsz-20 design-font fw-400">修正Canvas</h2>
       <form onSubmit={handleLogin} className="login-form card">
-      <h2 className="mb-30 text-center fsz-20 design-font fw-400">修正指示Canvas</h2>
-      <div className="flex items-center gap-5 mb-10">
-      <label htmlFor="username" className="fsz-13">ユーザー名: </label>
+        <div className="mb-20">
+          <label htmlFor="username" className="block fsz-15">Email </label>
           <input
             id="username"
             type="text"
@@ -49,19 +50,19 @@ const LoginPage: React.FC = () => {
             className="p-5"
           />
         </div>
-        <div className="flex items-center gap-5 mb-30">
-        <label htmlFor="password" className="fsz-13">パスワード: </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            className="p-5"
-          />
+        <div className="mb-30">
+          <label htmlFor="username" className="block fsz-15">Password </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              className="p-5"
+            />
         </div>
         {error && <p className="error text-center text-red fsz-14 mt-20 mb-20">{error}</p>}
-        <button type="submit" className="login-btn mx-auto btn-blue fsz-16">ログイン</button>
+        <button type="submit" className="w-full btn-black fsz-16">ログイン</button>
       </form>
     </div>
   );

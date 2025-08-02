@@ -151,7 +151,7 @@ const CanvasWithRects: React.FC<Props> = ({
 
   return (
     <div
-      className="img-area relative inline-block cursor-crosshair text-center"
+      className="img-area pt-10 relative inline-block cursor-crosshair text-center"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
     >

@@ -27,7 +27,7 @@ const AppRouter = () => {
           }
         />
         <Route
-          path="/view/:id"
+          path="/:id"
           element={
             <RequireAuth>
               <Editor mode="view" />

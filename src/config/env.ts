@@ -7,4 +7,6 @@ export const env = {
   apiUrl: `${serverUrl}/php/api`,
   authUrl: `${serverUrl}/php/auth`,
   lockUrl: `${serverUrl}/php/lock`,
+
+  useAuth: import.meta.env.VITE_USE_AUTH === 'true',
 };

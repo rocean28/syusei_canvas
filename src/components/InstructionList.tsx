@@ -1,18 +1,26 @@
-import type { ReactElement } from 'react';
+// import type { ReactElement } from 'react';
 import type { Instruction } from '../types';
 import type { EditorMode } from '../types/EditorMode';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { env } from '@/config/env';
+// import { marked } from 'marked';
+// import DOMPurify from 'dompurify';
+// import parse, { domToReact, HTMLReactParserOptions } from 'html-react-parser';
+
+// marked.setOptions({
+//   breaks: true,
+// });
 
 type Props = {
   mode: EditorMode;
   instructions: Instruction[];
+  totalInstructions: number;
   setInstructions: React.Dispatch<React.SetStateAction<Instruction[]>>;
   onRectClick?: (instructionId: string) => void;
 };
 
-const InstructionList: React.FC<Props> = ({ mode, instructions, setInstructions, onRectClick }) => {
+const InstructionList: React.FC<Props> = ({ mode, instructions, totalInstructions, setInstructions, onRectClick }) => {
 
   const handleTextChange = (id: string, value: string) => {
     setInstructions(prev =>
@@ -68,33 +76,84 @@ const InstructionList: React.FC<Props> = ({ mode, instructions, setInstructions,
     }
   };
 
-  function formatTextForDisplay(text: string): (string | ReactElement)[] {
+  function formatTextForDisplay(text: string): (string | React.ReactElement)[] {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
+
     const lines = text.split('\n');
 
     return lines.flatMap((line, lineIndex) => {
       const parts = line.split(urlRegex);
-      const lineElements = parts.map((part, index) =>
-        urlRegex.test(part) ? (
-          <a key={`${lineIndex}-${index}`} href={part} target="_blank" rel="noopener noreferrer" className="text-link fsz-14">
-            {part}
-          </a>
-        ) : (
-          part
-        )
-      );
+      const lineElements = parts.map((part, index) => {
+        if (urlRegex.test(part)) {
+          // URLパートはそのままリンク化
+          return (
+            <a
+              key={`${lineIndex}-${index}`}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-link fsz-14"
+            >
+              {part}
+            </a>
+          );
+        } else {
+          // テキストパートには装飾を適用
+          const fragments: (string | React.ReactElement)[] = [];
 
-      // 改行の代わりに <br /> を挿入（最後の行以外）
+          let lastIndex = 0;
+          const combinedRegex = /\*\*(.+?)\*\*|__(.+?)__/g;
+          let match;
+          let fragIndex = 0;
+
+          while ((match = combinedRegex.exec(part)) !== null) {
+            const [bold, underline] = match;
+            const start = match.index;
+
+            // 装飾前の文字列
+            if (start > lastIndex) {
+              fragments.push(part.slice(lastIndex, start));
+            }
+
+            // 装飾要素の追加
+            if (bold) {
+              fragments.push(
+                <strong key={`bold-${lineIndex}-${index}-${fragIndex}`}>
+                  {bold}
+                </strong>
+              );
+            } else if (underline) {
+              fragments.push(
+                <span key={`ul-${lineIndex}-${index}-${fragIndex}`} className="underline">
+                  {underline}
+                </span>
+              );
+            }
+
+            lastIndex = combinedRegex.lastIndex;
+            fragIndex++;
+          }
+
+          // 装飾後の残り文字列
+          if (lastIndex < part.length) {
+            fragments.push(part.slice(lastIndex));
+          }
+
+          return fragments.length > 0 ? fragments : part;
+        }
+      });
+
+      // 改行の挿入
       return lineIndex < lines.length - 1
-        ? [...lineElements, <br key={`br-${lineIndex}`} />]
-        : lineElements;
+        ? [...lineElements.flat(), <br key={`br-${lineIndex}`} />]
+        : lineElements.flat();
     });
   }
 
   return (
     <div>
-      <div className="px-5 mb-10 fsz-12 text-gray">
-        修正数: {instructions.length}
+      <div className="px-5 mb-10 pb-5 fsz-12 text-gray sticky bg-base">
+        このタブの修正数: {instructions.length}　/　全修正数: {totalInstructions}
       </div>
       {instructions.map((ins, index) => {
         return (
@@ -102,7 +161,7 @@ const InstructionList: React.FC<Props> = ({ mode, instructions, setInstructions,
             <div
               key={ins.id}
               id={`instruction-${ins.id}`}
-              className="ins-item card p-10 mb-15 rounded"
+              className="ins-item card p-10 mb-15 rounded fsz-14"
               onClick={() => onRectClick?.(ins.id)}
             >
             <div className={`mb-5 fsz-15 flex`}>
@@ -116,7 +175,7 @@ const InstructionList: React.FC<Props> = ({ mode, instructions, setInstructions,
                   value={ins.text}
                   onChange={e => handleTextChange(ins.id, e.target.value)}
                   rows={3}
-                  className="w-full p-5 rounded border"
+                  className="w-full p-5 rounded border "
                 />
                 <div className="flex justify-end gap-5">
                   <div
@@ -174,9 +233,9 @@ const InstructionList: React.FC<Props> = ({ mode, instructions, setInstructions,
                   </>
                   ) : (
                   <>
-                    <p className="w-full p-5 mt-5 mb-15">
+                    <div className="w-full p-5 mt-5 mb-15">
                       {formatTextForDisplay(ins.text || '')}
-                    </p>
+                    </div>
                   </>
                 )}
               </div>

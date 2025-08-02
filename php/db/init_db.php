@@ -28,18 +28,19 @@ try {
       updated_by TEXT NOT NULL
     );
 
-    CREATE TABLE images (
+    CREATE TABLE tabs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      group_id TEXT NOT NULL,
-      image TEXT NOT NULL,
+      post_id TEXT NOT NULL,
+      image_filename TEXT NOT NULL,
       title TEXT,
       url TEXT,
-      FOREIGN KEY(group_id) REFERENCES posts(id)
+      image_src TEXT,
+      FOREIGN KEY(post_id) REFERENCES posts(id)
     );
 
     CREATE TABLE instructions (
       id TEXT PRIMARY KEY,
-      image_id INTEGER NOT NULL,
+      tab_id INTEGER NOT NULL,
       x REAL NOT NULL,
       y REAL NOT NULL,
       width REAL NOT NULL,
@@ -48,7 +49,7 @@ try {
       comment TEXT,
       is_fixed INTEGER NOT NULL DEFAULT 0,
       is_ok INTEGER NOT NULL DEFAULT 0,
-      FOREIGN KEY(image_id) REFERENCES images(id)
+      FOREIGN KEY(tab_id) REFERENCES tabs(id)
     );
   ");
 

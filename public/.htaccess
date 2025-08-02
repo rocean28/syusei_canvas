@@ -1,3 +1,6 @@
+Action myphp-script /canvas/php.cgi
+AddHandler myphp-script .php
+
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

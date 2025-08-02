@@ -16,19 +16,19 @@ ini_set('memory_limit', '1024M');
 require_once __DIR__ . '/../common.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-  echo json_encode(['success' => false, 'error' => 'Invalid request', 'group_id' => $_POST['group_id']]);
+  echo json_encode(['success' => false, 'error' => 'Invalid request', 'post_id' => $_POST['post_id']]);
   exit;
 }
 
-if (!isset($_POST['group_id'])) {
-  echo json_encode(['success' => false, 'error' => 'IDがありません', 'group_id' => $_POST['group_id']]);
+if (!isset($_POST['post_id'])) {
+  echo json_encode(['success' => false, 'error' => 'IDがありません', 'post_id' => $_POST['post_id']]);
   exit;
 }
 
-$groupId = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $_POST['group_id']);
+$postId = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $_POST['post_id']);
 $year = date('Y');
 $month = date('m');
-$uploadDir = __DIR__ . "/../../uploads/{$year}/{$month}/{$groupId}/";
+$uploadDir = __DIR__ . "/../../uploads/{$year}/{$month}/{$postId}/";
 if (!file_exists($uploadDir)) mkdir($uploadDir, 0777, true);
 
 $result = [];
@@ -119,5 +119,5 @@ echo json_encode([
   'success' => true,
   'results' => $result,
   'filename' => $finalFilename,
-  'group_id' => $groupId,
+  'post_id' => $postId,
 ]);

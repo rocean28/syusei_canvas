@@ -10,5 +10,9 @@ return [
   'test@syuseicanvas.co.jp' => [
     'password' => $common_password,
     'name' => 'テスト'
-  ]
+  ],
+  'test02@syuseicanvas.co.jp' => [
+    'password' => $common_password,
+    'name' => 'テスト2号機'
+  ],
 ];

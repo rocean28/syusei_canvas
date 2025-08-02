@@ -31,23 +31,23 @@ try {
   ]);
 
   // 旧 instructions 削除
-  $stmt = $db->prepare('DELETE FROM instructions WHERE image_id IN (SELECT id FROM images WHERE group_id = ?)');
+  $stmt = $db->prepare('DELETE FROM instructions WHERE tab_id IN (SELECT id FROM tabs WHERE post_id = ?)');
   $stmt->execute([$id]);
 
-  // 旧 images 削除
-  $stmt = $db->prepare('DELETE FROM images WHERE group_id = ?');
+  // 旧 tab 削除
+  $stmt = $db->prepare('DELETE FROM tabs WHERE post_id = ?');
   $stmt->execute([$id]);
 
-  // images・instructions 挿入
-  $stmtImage = $db->prepare('INSERT INTO images (group_id, image, title, url) VALUES (?, ?, ?, ?)');
-  $stmtInst = $db->prepare('INSERT INTO instructions (id, image_id, x, y, width, height, text, comment, is_fixed, is_ok) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  // tabs・instructions 挿入
+  $stmtImage = $db->prepare('INSERT INTO tabs (post_id, image_filename, title, url) VALUES (?, ?, ?, ?)');
+  $stmtInst = $db->prepare('INSERT INTO instructions (id, tab_id, x, y, width, height, text, comment, is_fixed, is_ok) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
-  foreach ($data['images'] as $img) {
-    if (empty($img['image'])) throw new Exception('画像ファイル名が指定されていません');
+  foreach ($data['tabs'] as $img) {
+    if (empty($img['image_filename'])) throw new Exception('画像ファイル名が指定されていません');
 
     $stmtImage->execute([
       $id,
-      $img['image'],
+      $img['image_filename'],
       $img['title'] ?? '',
       $img['url'] ?? ''
     ]);

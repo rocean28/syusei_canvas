@@ -22,11 +22,11 @@ try {
   $db->beginTransaction();
 
   // instructions 削除
-  $stmt = $db->prepare('DELETE FROM instructions WHERE image_id IN (SELECT id FROM images WHERE group_id = ?)');
+  $stmt = $db->prepare('DELETE FROM instructions WHERE tab_id IN (SELECT id FROM tabs WHERE post_id = ?)');
   $stmt->execute([$id]);
 
-  // images 削除
-  $stmt = $db->prepare('DELETE FROM images WHERE group_id = ?');
+  // tabs 削除
+  $stmt = $db->prepare('DELETE FROM tabs WHERE post_id = ?');
   $stmt->execute([$id]);
 
   // posts 削除

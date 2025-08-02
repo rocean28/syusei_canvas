@@ -9,8 +9,8 @@ try {
   $data = json_decode($json, true);
   if (!$data) throw new Exception('JSONが無効です');
 
-  $groupId = $data['id'] ?? null;
-  if (!$groupId) throw new Exception('IDが指定されていません');
+  $postId = $data['id'] ?? null;
+  if (!$postId) throw new Exception('IDが指定されていません');
 
   $title = trim($data['title'] ?? '');
   if ($title === '') $title = '無題の修正指示';
@@ -22,11 +22,11 @@ try {
 
   // posts UPDATE（created_xxxは触らない）
   $stmt = $db->prepare('UPDATE posts SET title = ?, updated_at = ?, updated_by = ? WHERE id = ?');
-  $stmt->execute([$title, $updatedAt, $updatedBy, $groupId]);
+  $stmt->execute([$title, $updatedAt, $updatedBy, $postId]);
 
   // 🔍 削除前に旧 instructions の is_fixed / is_ok を退避
-  $stmt = $db->prepare('SELECT i.id, i.is_fixed, i.is_ok FROM instructions i INNER JOIN images img ON i.image_id = img.id WHERE img.group_id = ?');
-  $stmt->execute([$groupId]);
+  $stmt = $db->prepare('SELECT i.id, i.is_fixed, i.is_ok FROM instructions i INNER JOIN tabs img ON i.tab_id = img.id WHERE img.post_id = ?');
+  $stmt->execute([$postId]);
   $oldStatus = [];
   foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     $oldStatus[$row['id']] = [
@@ -35,29 +35,29 @@ try {
     ];
   }
 
-  // 🗑 images / instructions 全削除
-  $stmt = $db->prepare('DELETE FROM instructions WHERE image_id IN (SELECT id FROM images WHERE group_id = ?)');
-  $stmt->execute([$groupId]);
+  // 🗑 tabs / instructions 全削除
+  $stmt = $db->prepare('DELETE FROM instructions WHERE tab_id IN (SELECT id FROM tabs WHERE post_id = ?)');
+  $stmt->execute([$postId]);
 
-  $stmt = $db->prepare('DELETE FROM images WHERE group_id = ?');
-  $stmt->execute([$groupId]);
+  $stmt = $db->prepare('DELETE FROM tabs WHERE post_id = ?');
+  $stmt->execute([$postId]);
 
-  // ➕ 再INSERT（images → instructions）
-  $stmtImage = $db->prepare('INSERT INTO images (group_id, image, title, url) VALUES (?, ?, ?, ?)');
-  $stmtInst  = $db->prepare('INSERT INTO instructions (id, image_id, x, y, width, height, text, comment, is_fixed, is_ok) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  // ➕ 再INSERT（tabs → instructions）
+  $stmtImage = $db->prepare('INSERT INTO tabs (post_id, image_filename, title, url) VALUES (?, ?, ?, ?)');
+  $stmtInst  = $db->prepare('INSERT INTO instructions (id, tab_id, x, y, width, height, text, comment, is_fixed, is_ok) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
-  foreach ($data['images'] as $img) {
-    if (empty($img['image'])) throw new Exception('画像ファイル名が指定されていません');
+  foreach ($data['tabs'] as $tab) {
+    if (empty($tab['image_filename'])) throw new Exception("画像ファイル名が指定されていません");
 
     $stmtImage->execute([
-      $groupId,
-      $img['image'],
-      $img['title'] ?? '',
-      $img['url'] ?? ''
+      $postId,
+      $tab['image_filename'],
+      $tab['title'] ?? '',
+      $tab['url'] ?? ''
     ]);
     $imageId = $db->lastInsertId();
 
-    foreach ($img['instructions'] as $inst) {
+    foreach ($tab['instructions'] as $inst) {
       $id = $inst['id'];
       $old = $oldStatus[$id] ?? ['is_fixed' => 0, 'is_ok' => 0];
 
@@ -81,12 +81,12 @@ try {
   $mm = $datetime->format('m');
 
   // ディレクトリ
-  $uploadDir = __DIR__ . "/../../uploads/{$Y}/{$mm}/{$groupId}/";
+  $uploadDir = __DIR__ . "/../../uploads/{$Y}/{$mm}/{$postId}/";
 
   // ディレクトリが存在する場合のみ処理
   if (is_dir($uploadDir)) {
     $existingFiles = array_diff(scandir($uploadDir), ['.', '..']);
-    $usedFiles = array_map(fn($img) => $img['image'], $data['images']);
+    $usedFiles = array_map(fn($img) => $img['image_filename'], $data['tabs']);
 
     foreach ($existingFiles as $file) {
       if (!in_array($file, $usedFiles, true)) {
@@ -99,7 +99,7 @@ try {
   }
 
   $db->commit();
-  echo json_encode(['success' => true, 'id' => $groupId]);
+  echo json_encode(['success' => true, 'id' => $postId]);
 
 } catch (Exception $e) {
   if (isset($db) && $db->inTransaction()) {

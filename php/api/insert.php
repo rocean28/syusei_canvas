@@ -7,8 +7,8 @@ try {
 
   if (!$data) throw new Exception('JSONが無効です');
 
-  $groupId = $data['id'] ?? null;
-  if (!$groupId) throw new Exception('IDが指定されていません');
+  $postId = $data['id'] ?? null;
+  if (!$postId) throw new Exception('IDが指定されていません');
 
   $title = trim($data['title'] ?? '');
   if ($title === '') $title = '無題の修正指示';
@@ -20,18 +20,18 @@ try {
 
   // posts 挿入（INSERTのみ）
   $stmt = $db->prepare('INSERT INTO posts (id, title, created_at, updated_at, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?)');
-  $stmt->execute([$groupId, $title, $createdAt, $updatedAt, $createdBy, $updatedBy]);
+  $stmt->execute([$postId, $title, $createdAt, $updatedAt, $createdBy, $updatedBy]);
 
-  // images 挿入
-  $stmtImage = $db->prepare('INSERT INTO images (group_id, image, title, url) VALUES (?, ?, ?, ?)');
-  $stmtInst = $db->prepare('INSERT INTO instructions (id, image_id, x, y, width, height, text, comment, is_fixed, is_ok) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  // tabs 挿入
+  $stmtImage = $db->prepare('INSERT INTO tabs (post_id, image_filename, title, url) VALUES (?, ?, ?, ?)');
+  $stmtInst = $db->prepare('INSERT INTO instructions (id, tab_id, x, y, width, height, text, comment, is_fixed, is_ok) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
-  foreach ($data['images'] as $img) {
-    if (empty($img['image'])) throw new Exception('画像ファイル名が指定されていません');
+  foreach ($data['tabs'] as $img) {
+    if (empty($img['image_filename'])) throw new Exception('画像ファイル名が指定されていません');
 
     $stmtImage->execute([
-      $groupId,
-      $img['image'],
+      $postId,
+      $img['image_filename'],
       $img['title'] ?? '',
       $img['url'] ?? ''
     ]);
@@ -52,7 +52,7 @@ try {
     }
   }
 
-  echo json_encode(['success' => true, 'id' => $groupId]);
+  echo json_encode(['success' => true, 'id' => $postId]);
 } catch (Exception $e) {
   http_response_code(500);
   echo json_encode(['success' => false, 'error' => $e->getMessage()]);

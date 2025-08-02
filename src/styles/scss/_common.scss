@@ -12,9 +12,10 @@
 body {
   width: stretch;
   min-width: 1000px;
-  background: #fafafa;
+  background: $base_bg;
   font-family: $basse_font;
   font-size: 1.6rem;
+  color: #333;
 }
 .wrap {
   display: flex;
@@ -53,6 +54,7 @@ select {
   border-radius: 4px;
   border: 1px solid #dad8d3;
   background: #fff;
+  outline: none;
   &::placeholder {
     color: #aaa;
   }
@@ -166,30 +168,6 @@ img {
   text-align: center;
 }
 
-[class*='btn-'] {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 10px 15px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  line-height: 1;
-  color: #fff;
-  outline: none;
-  @each $name, $color in $colors {
-    &.btn-#{"" + $name} {
-      background: $color;
-      @if $name == lightgray {
-        color: #333;
-      }
-      &:hover {
-        background: color.adjust($color, $lightness: -10%);
-      }
-    }
-  }
-}
-
 .btn-new {
   display: flex;
   justify-content: center;
@@ -214,6 +192,7 @@ img {
   position: fixed;
   top: 70px;
   right: 10px;
+  z-index: 99;
 }
 
 /* 一覧ページ
@@ -264,6 +243,9 @@ img {
   bottom: 1px;
   right: 1px;
   color: map.get($colors, gray);
+  &:hover {
+    cursor: pointer;
+  }
 }
 .pagination {
   display: flex;
@@ -277,7 +259,6 @@ img {
     width: 35px;
     height: 35px;
     border: 1px solid map.get($colors, lightgray);
-    padding-top: 2px;
     border-radius: 4px;
     font-family: $num_font;
     font-weight: 400;
@@ -350,7 +331,8 @@ img {
   &.-trash {
     width: 20px;
     height: 20px;
-    top: 7px;
+    padding-bottom: 2px;
+    top: 6px;
     right: 2px;
     color: map.get($colors, gray);
     font-weight: 700;
@@ -373,7 +355,7 @@ img {
 
 }
 .img-wrap {
-  height: calc(100vh - 250px);
+  height: calc(100vh - 195px);
   box-sizing: unset;
   overflow-y: auto;
   z-index: 9;
@@ -381,9 +363,23 @@ img {
 .ins-list {
   flex-shrink: 0;
   width: 330px;
-  height: calc(100vh - 250px);
+  height: calc(100vh - 155px);
   overflow-y: auto;
   scrollbar-width: none;
+}
+.ins-item {
+  ul {
+    padding-left: 1.5em;
+    list-style-type: disc;
+  }
+
+  blockquote {
+    border-left: 4px solid #ccc;
+    padding-left: 1em;
+    color: #555;
+    margin: 1em 0;
+    font-style: italic;
+  }
 }
 .ins-item-num {
   background: map.get($colors, lightgray);
@@ -401,13 +397,19 @@ img {
 }
 .rect {
   border: 2px solid map.get($colors, blue);
-  box-shadow: inset 0 0 0 1px #fff;
   position: absolute;
   z-index: 99;
   &.is-active {
-    background: rgba(color.adjust(map.get($colors, blue), $lightness: 20%), 0.1);
-    // box-shadow: 0 0 10px rgba(#000, 0.3);
+    background: rgba(color.adjust(map.get($colors, blue), $lightness: 20%), 0.35);
+    box-shadow: 0 0 10px rgba(#000, 0.3);
     z-index: 100;
+  }
+  &::after {
+    display: block;
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 1px solid #fff;
   }
 }
 .rect-num {
@@ -415,16 +417,17 @@ img {
   justify-content: center;
   align-items: center;
   width: 20px;
-  height: 20px;
-  padding-bottom: 2px;
-  border-radius: 4px 4px 0 0;
+  height: 18px;
+  // padding-bottom: 3px;
+  border-radius: 4px 0 0 4px;
   background: map.get($colors, blue);
   position: absolute;
-  top: -20px;
-  left: -2px;
+  top: -2px;
+  left: -20px;
   color: #fff;
   line-height: 1;
-  font-size: 1.3rem;
+  font-size: 1rem;
+  z-index: 5;
 }
 .info {
   margin-top: auto;

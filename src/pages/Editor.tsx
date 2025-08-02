@@ -47,8 +47,8 @@ const Editor: React.FC<Props> = ({ mode }) => {
   });
 
   function generateId(): string {
-    const now = dayjs().format('YYYYMMDDHHmmss');
-    return `${now}${nanoid(5)}`;
+    const base36 = Date.now().toString(36);
+    return `${base36}${nanoid(5)}`;
   }
 
   const [id] = useState(() =>
@@ -80,14 +80,14 @@ const Editor: React.FC<Props> = ({ mode }) => {
       const Y = now.getFullYear().toString();
       const mm = ('0' + (now.getMonth() + 1)).slice(-2);
 
-      const loaded = data.images.map((img: any) => ({
+      const loaded = data.tabs.map((tab: any) => ({
         id: `${nanoid(10)}`,
-        imageName: img.image,
-        imageUrl: `${env.serverUrl}/uploads/${Y}/${mm}/${id}/${img.image}`,
+        imageName: tab.image_filename,
+        imageUrl: `${env.serverUrl}/uploads/${Y}/${mm}/${id}/${tab.image_filename}`,
         imageFile: null,
-        instructions: img.instructions || [],
-        title: img.title || '',
-        url: img.url || '',
+        instructions: tab.instructions || [],
+        title: tab.title || '',
+        url: tab.url || '',
       }));
       setImages(loaded);
       if (loaded.length > 0) setActiveImageId(loaded[0].id);
@@ -102,6 +102,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
     } catch (err) {
       console.error('読み込みエラー:', err);
     }
+
   };
 
   useEffect(() => {
@@ -168,8 +169,8 @@ const Editor: React.FC<Props> = ({ mode }) => {
       const updatedImages = await Promise.all(images.map(async (img) => {
         if (img.imageFile) {
           const formData = new FormData();
-          formData.append('group_id', id);
-          formData.append('image', img.imageFile);
+          formData.append('post_id', id);
+          formData.append('image_filename', img.imageFile);
 
           const res = await fetch(`${env.apiUrl}/upload.php`, {
             method: 'POST',
@@ -197,7 +198,6 @@ const Editor: React.FC<Props> = ({ mode }) => {
       if (imagesChanged) {
         setImages(updatedImages);
       }
-
       const payload = {
         id,
         title: title.trim() || '無題の修正指示',
@@ -206,8 +206,8 @@ const Editor: React.FC<Props> = ({ mode }) => {
         updated_at: now,
         created_by: isNew ? currentUser.name : createInfo.created_by,
         updated_by: currentUser.name,
-        images: updatedImages.map((img) => ({
-          image: img.image || img.imageName,
+        tabs: updatedImages.map((img) => ({
+          image_filename: img.image || img.imageName,
           title: img.title || '',
           url: img.url || '',
           instructions: img.instructions.map((inst) => ({
@@ -222,6 +222,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
           }))
         }))
       };
+      // console.log(payload);
 
       const saveType = mode === 'edit' ? 'update' : 'insert';
       const res = await fetch(`${env.apiUrl}/${saveType}.php`, {
@@ -236,7 +237,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
       if (result.success && result.id) {
         await unlockEditor(id);
         await fetchData();
-        navigate(`/view/${result.id}`);
+        navigate(`/${result.id}`);
       } else {
         console.error(result);
         alert('保存に失敗しました');
@@ -346,7 +347,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
     if (rect && imgArea) {
       const offsetTop = (rect as HTMLElement).offsetTop;
       imgArea.scrollTo({
-        top: offsetTop - imgArea.clientHeight / 2,
+        top: offsetTop - imgArea.clientHeight / 10,
         behavior: 'smooth'
       });
       rect.classList.add('is-active');
@@ -379,12 +380,12 @@ const Editor: React.FC<Props> = ({ mode }) => {
         const data = await res.json();
         if (mode && id && data.locked && currentUser.name && data.locked_by !== currentUser.name) {
           alert(`${data.locked_by}さんが編集中です（${data.locked_at} から）`);
-          navigate(`/view/${id}`);
+          navigate(`/${id}`);
         }
       } catch (err) {
         console.error(err);
         alert('ロック状態の確認に失敗しました');
-        navigate(`/view/${id}`);
+        navigate(`/${id}`);
       }
     };
 
@@ -431,8 +432,13 @@ const Editor: React.FC<Props> = ({ mode }) => {
       console.error('キャンセル時のロック解除失敗:', e);
     }
 
-    navigate(`/view/${id}`);
+    navigate(`/${id}`);
   };
+
+  const totalInstructions = images.reduce(
+    (sum, img) => sum + img.instructions.length,
+    0
+  );
 
   return (
     <div className={`wrap page-${mode}`}>
@@ -450,9 +456,9 @@ const Editor: React.FC<Props> = ({ mode }) => {
             />
           </div>
         ) : (
-          <div className="w-full mb-10">
-            <div className="mb-10 text-center">{title || '無題の修正指示'}</div>
-            <div className="flex-center gap-10 relative">
+          <div className="w-full">
+            <div className="fsz-16 fw-700 text-center">{title || '無題の修正指示'}</div>
+            <div className="flex-center gap-10 mt-10 relative hidden">
               <span className="w-100 text-right fsz-12 text-gray">共有リンク</span>
               <input
                 type="text"
@@ -550,7 +556,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
           <>
             <div className="w-full flex gap-10">
               <div className="image-area card p-10">
-                <div className="flex gap-5 mb-10 fsz-12 text-gray">
+                <div className="flex gap-5 fsz-12 text-gray">
                   <div className="flex-shrink-0">ページURL:</div>
                   {mode !== 'view' ?(
                     <input
@@ -568,7 +574,15 @@ const Editor: React.FC<Props> = ({ mode }) => {
                       placeholder="https://sample.com/page.php"
                     />
                   ) : (
-                    <div className="w-full px-5">{activeImage.url || '（未入力）'}</div>
+                    <div className="w-full px-5">
+                      {activeImage.url ? (
+                        <a href={activeImage.url} className="" target="_blank" rel="noopener noreferrer">
+                          {activeImage.url}
+                        </a>
+                      ) : (
+                        ''
+                      )}
+                    </div>
                   )}
                 </div>
                 <CanvasWithRects
@@ -594,6 +608,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
                 <InstructionList
                   mode={mode}
                   instructions={activeImage.instructions}
+                  totalInstructions={totalInstructions}
                   setInstructions={(newInstructions: SetStateAction<Instruction[]>) => {
                     const updated =
                       typeof newInstructions === 'function'

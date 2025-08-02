@@ -9,7 +9,7 @@ const Header: React.FC = () => {
     <header className="header">
       <div className="header__left flex gap-30 items-center">
         <h1 className="header__logo">
-          <a href={`${env.appUrl}/`} className="header__logo-link">修正指示Canvas</a>
+          <a href={`${env.appUrl}/`} className="header__logo-link">修正Canvas</a>
         </h1>
       </div>
       <nav className="header__nav flex items-center gap-10">
