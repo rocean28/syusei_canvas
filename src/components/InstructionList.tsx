@@ -78,17 +78,18 @@ const InstructionList: React.FC<Props> = ({ mode, instructions, totalInstruction
 
   function formatTextForDisplay(text: string): (string | React.ReactElement)[] {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const combinedRegex = /\*\*(.+?)\*\*|__(.+?)__/g;
 
     const lines = text.split('\n');
 
     return lines.flatMap((line, lineIndex) => {
       const parts = line.split(urlRegex);
-      const lineElements = parts.map((part, index) => {
+      const lineElements = parts.map((part, partIndex) => {
         if (urlRegex.test(part)) {
-          // URLパートはそのままリンク化
+          // URLリンク
           return (
             <a
-              key={`${lineIndex}-${index}`}
+              key={`url-${lineIndex}-${partIndex}`}
               href={part}
               target="_blank"
               rel="noopener noreferrer"
@@ -98,34 +99,34 @@ const InstructionList: React.FC<Props> = ({ mode, instructions, totalInstruction
             </a>
           );
         } else {
-          // テキストパートには装飾を適用
+          // 装飾解析
           const fragments: (string | React.ReactElement)[] = [];
-
           let lastIndex = 0;
-          const combinedRegex = /\*\*(.+?)\*\*|__(.+?)__/g;
           let match;
           let fragIndex = 0;
 
           while ((match = combinedRegex.exec(part)) !== null) {
-            const [bold, underline] = match;
             const start = match.index;
+            const boldText = match[1];
+            const underlineText = match[2];
 
-            // 装飾前の文字列
             if (start > lastIndex) {
               fragments.push(part.slice(lastIndex, start));
             }
 
-            // 装飾要素の追加
-            if (bold) {
+            if (boldText) {
               fragments.push(
-                <strong key={`bold-${lineIndex}-${index}-${fragIndex}`}>
-                  {bold}
+                <strong key={`bold-${lineIndex}-${partIndex}-${fragIndex}`}>
+                  {boldText}
                 </strong>
               );
-            } else if (underline) {
+            } else if (underlineText) {
               fragments.push(
-                <span key={`ul-${lineIndex}-${index}-${fragIndex}`} className="underline">
-                  {underline}
+                <span
+                  key={`ul-${lineIndex}-${partIndex}-${fragIndex}`}
+                  className="underline"
+                >
+                  {underlineText}
                 </span>
               );
             }
@@ -134,7 +135,6 @@ const InstructionList: React.FC<Props> = ({ mode, instructions, totalInstruction
             fragIndex++;
           }
 
-          // 装飾後の残り文字列
           if (lastIndex < part.length) {
             fragments.push(part.slice(lastIndex));
           }
@@ -143,7 +143,6 @@ const InstructionList: React.FC<Props> = ({ mode, instructions, totalInstruction
         }
       });
 
-      // 改行の挿入
       return lineIndex < lines.length - 1
         ? [...lineElements.flat(), <br key={`br-${lineIndex}`} />]
         : lineElements.flat();

@@ -449,12 +449,12 @@ const Editor: React.FC<Props> = ({ mode }) => {
 
     try {
       await unlockEditor(id);
-      window.location.reload();
     } catch (e) {
       console.error('キャンセル時のロック解除失敗:', e);
     }
 
     navigate(`/${id}`);
+    window.location.reload();
   };
 
   const totalInstructions = images.reduce(
