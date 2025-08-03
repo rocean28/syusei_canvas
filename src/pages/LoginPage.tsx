@@ -36,6 +36,7 @@ const LoginPage: React.FC = () => {
       });
 
       const data = await res.json();
+      console.log(data);
 
       if (res.ok && data.success) {
         console.log(data);
@@ -45,6 +46,7 @@ const LoginPage: React.FC = () => {
         console.log(data);
       }
     } catch (err) {
+      console.log(err);
       setError('通信エラーが発生しました');
     }
   };

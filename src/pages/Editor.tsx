@@ -28,6 +28,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
   const [currentUser, setCurrentUser] = useState<User>({ email: '', name: '' });
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [newImageAdded, setNewImageAdded] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -90,7 +91,10 @@ const Editor: React.FC<Props> = ({ mode }) => {
         url: tab.url || '',
       }));
       setImages(loaded);
+
       if (loaded.length > 0) setActiveImageId(loaded[0].id);
+
+      // console.log(loaded);
 
       setCreateInfo({
         created_at: data.created_at,
@@ -98,6 +102,8 @@ const Editor: React.FC<Props> = ({ mode }) => {
         created_by: data.created_by,
         updated_by: data.updated_by
       });
+
+      return loaded;
 
     } catch (err) {
       console.error('読み込みエラー:', err);
@@ -128,7 +134,14 @@ const Editor: React.FC<Props> = ({ mode }) => {
     };
     setImages((prev) => [...prev, newImage]);
     setActiveImageId(newId);
+    setNewImageAdded(true);
   };
+
+  useEffect(() => {
+    if (!newImageAdded) return;
+    handleSaveAll('image_upload');
+    setNewImageAdded(false);
+  }, [images]);
 
   const handleUpdateInstructions = (imageId: string, newInstructions: Instruction[]) => {
     setImages((prev) =>
@@ -149,20 +162,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
   //   }
   // };
 
-  const unlockEditor = async (targetId: string) => {
-    try {
-      await fetch(`${env.lockUrl}/unlock.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ id: targetId })
-      });
-    } catch (e) {
-      console.error('ロック解除失敗:', e);
-    }
-  };
-
-  const handleSaveAll = async () => {
+  const handleSaveAll = async (reason: 'image_upload' | 'manual' = 'manual') => {
     const now = dayjs().format('YYYY-MM-DD HH:mm:ss');
     setIsSaving(true); // ← 保存開始
     try {
@@ -200,7 +200,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
       }
       const payload = {
         id,
-        title: title.trim() || '無題の修正指示',
+        title: title.trim() || '',
         created_at: isNew ? now : createInfo.created_at,
         category: '',
         updated_at: now,
@@ -235,9 +235,17 @@ const Editor: React.FC<Props> = ({ mode }) => {
 
       const result = await res.json();
       if (result.success && result.id) {
-        await unlockEditor(id);
-        await fetchData();
-        navigate(`/${result.id}`);
+        const loaded = await fetchData();
+        if (reason !== 'image_upload') {
+          await unlockEditor(id);
+          navigate(`/${result.id}`);
+        } else {
+          navigate(`/edit/${result.id}`);
+          const lastImage = loaded[loaded.length - 1];
+          if (lastImage) {
+            setActiveImageId(lastImage.id);
+          }
+        }
       } else {
         console.error(result);
         alert('保存に失敗しました');
@@ -247,10 +255,9 @@ const Editor: React.FC<Props> = ({ mode }) => {
       console.error(e);
       alert(e instanceof Error ? e.message : '保存中にエラーが発生しました');
     } finally {
-      setIsSaving(false); // ← 保存終了
+      setIsSaving(false);
     }
   };
-
 
   const handleCopy = async () => {
     try {
@@ -383,6 +390,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
           navigate(`/${id}`);
         }
       } catch (err) {
+        console.log(`${env.lockUrl}/lock.php?id=${id}`);
         console.error(err);
         alert('ロック状態の確認に失敗しました');
         navigate(`/${id}`);
@@ -396,6 +404,19 @@ const Editor: React.FC<Props> = ({ mode }) => {
       }, 1000);
     }
   }, [mode, id, currentUser.name]);
+
+  const unlockEditor = async (targetId: string) => {
+    try {
+      await fetch(`${env.lockUrl}/unlock.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ id: targetId })
+      });
+    } catch (e) {
+      console.error('ロック解除失敗:', e);
+    }
+  };
 
   // 画面離脱時にロック解除
   useEffect(() => {
@@ -428,6 +449,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
 
     try {
       await unlockEditor(id);
+      window.location.reload();
     } catch (e) {
       console.error('キャンセル時のロック解除失敗:', e);
     }
@@ -449,7 +471,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
             <div className="flex-shrink-0">案件名：</div>
             <input
               type="text"
-              value={title}
+              value={title === '無題の修正指示' ? '' : title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full rounded p-5"
               placeholder=""
@@ -494,7 +516,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
                     キャンセル
                   </div>
                 )}
-                <div onClick={handleSaveAll} className="btn-save-all btn-blue">
+                <div onClick={() => handleSaveAll('manual')} className="btn-save-all btn-blue">
                   保存する
                 </div>
                 {isSaving && (
@@ -628,7 +650,7 @@ const Editor: React.FC<Props> = ({ mode }) => {
             {mode !== 'view' && (
               <>
                 <div className="w-full flex justify-end mt-30 mb-20">
-                  {/* <div onClick={handleSaveAll} className="btn-save-all btn-blue">
+                  {/* <div onClick={() => handleSaveAll('manual')} className="btn-save-all btn-blue">
                     保存する
                   </div> */}
                 </div>

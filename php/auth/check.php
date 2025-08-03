@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/../common.php';
+session_start();
+header('Content-Type: application/json');
 
 if (isset($_SESSION['user_email'])) {
   echo json_encode([
@@ -9,6 +10,5 @@ if (isset($_SESSION['user_email'])) {
   ]);
 } else {
   echo json_encode(['loggedIn' => false]);
-  // http_response_code(401);
 }
 

@@ -13,5 +13,15 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, 'src'),
       },
     },
+    server: {
+      proxy: {
+        '/php/': {
+          target: 'http://localhost/syusei_canvas/',
+          changeOrigin: true,
+          secure: false,
+          // rewrite: path => path.replace(/^\/php/, '/php')
+        }
+      }
+    }
   }
 })

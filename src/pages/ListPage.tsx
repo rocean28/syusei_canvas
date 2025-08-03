@@ -90,7 +90,9 @@ const ListPage: React.FC = () => {
   }, [page, selectedAuthor, selectedMonth, searchTitle, searchKeyword, sortOrder]);
 
   useEffect(() => {
-    fetch(`${env.apiUrl}/filter_options.php`)
+    fetch(`${env.apiUrl}/filter_options.php`, {
+      credentials: 'include',
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
