@@ -46,7 +46,7 @@ const AppRouter = () => {
           path="/"
           element={
             <RequireAuth>
-              <Editor mode="create" />
+              <ListPage />
             </RequireAuth>
           }
         />

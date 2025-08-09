@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { env } from '@/config/env';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// import { faSort, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 const ListPage: React.FC = () => {
@@ -12,18 +13,10 @@ const ListPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const perPage = 15;
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-
   const [selectedAuthor, setSelectedAuthor] = useState<string>('');
-
-  // 年・月を分離
-  const thisYear = new Date().getFullYear().toString();
-  const [selectedYear, setSelectedYear] = useState<string>(thisYear); // 既定は今年
-  const [selectedMonth, setSelectedMonth] = useState<string>(''); // 既定は「すべて」
-
+  const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [authors, setAuthors] = useState<string[]>([]);
-  const [months, setMonths] = useState<string[]>([]); // "YYYY-MM" の配列想定
-  const [years, setYears] = useState<string[]>([]);   // months から抽出
-
+  const [months, setMonths] = useState<string[]>([]);
   const [searchTitleInput, setSearchTitleInput] = useState('');
   const [searchTitle, setSearchTitle] = useState('');
   const [searchKeywordInput, setSearchKeywordInput] = useState('');
@@ -31,42 +24,54 @@ const ListPage: React.FC = () => {
   const titleDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keywordDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // タイトル入力の監視（1秒デバウンス）
+  // タイトル入力の監視
   useEffect(() => {
-    if (titleDebounceTimer.current) clearTimeout(titleDebounceTimer.current);
+    if (titleDebounceTimer.current) {
+      clearTimeout(titleDebounceTimer.current);
+    }
+
     titleDebounceTimer.current = setTimeout(() => {
       setSearchTitle(searchTitleInput);
       setPage(1);
     }, 1000);
+
     return () => {
-      if (titleDebounceTimer.current) clearTimeout(titleDebounceTimer.current);
+      if (titleDebounceTimer.current) {
+        clearTimeout(titleDebounceTimer.current);
+      }
     };
   }, [searchTitleInput]);
 
-  // キーワード入力の監視（1秒デバウンス）
+  // キーワード入力の監視
   useEffect(() => {
-    if (keywordDebounceTimer.current) clearTimeout(keywordDebounceTimer.current);
+    if (keywordDebounceTimer.current) {
+      clearTimeout(keywordDebounceTimer.current);
+    }
+
     keywordDebounceTimer.current = setTimeout(() => {
       setSearchKeyword(searchKeywordInput);
       setPage(1);
     }, 1000);
+
     return () => {
-      if (keywordDebounceTimer.current) clearTimeout(keywordDebounceTimer.current);
+      if (keywordDebounceTimer.current) {
+        clearTimeout(keywordDebounceTimer.current);
+      }
     };
   }, [searchKeywordInput]);
 
-  // 一覧取得（year/month を分けて送る）
   useEffect(() => {
     const params = new URLSearchParams({
       page: page.toString(),
       per_page: perPage.toString(),
       author: selectedAuthor,
-      year: selectedYear,        // ←年
-      month: selectedMonth,      // ←"01"〜"12" or ''（すべて）
+      month: selectedMonth,
       title: searchTitle,
       keyword: searchKeyword,
       sort: sortOrder,
     });
+
+    // console.log(`${env.apiUrl}/list.php?${params.toString()}`);
 
     fetch(`${env.apiUrl}/list.php?${params.toString()}`)
       .then((res) => res.json())
@@ -79,35 +84,28 @@ const ListPage: React.FC = () => {
       .catch((err) => {
         console.error('一覧取得エラー:', err);
       });
-  }, [page, selectedAuthor, selectedYear, selectedMonth, searchTitle, searchKeyword, sortOrder]);
 
-  // フィルター情報取得（authors / months）
+    // console.log("searchTitle:" + searchTitle);
+    // console.log("searchKeyword:" + searchKeyword);
+  }, [page, selectedAuthor, selectedMonth, searchTitle, searchKeyword, sortOrder]);
+
   useEffect(() => {
-    fetch(`${env.apiUrl}/filter_options.php`, { credentials: 'include' })
+    fetch(`${env.apiUrl}/filter_options.php`, {
+      credentials: 'include',
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
           setAuthors(data.authors || []);
-          const m = (data.months || []) as string[]; // "YYYY-MM" 想定
-          setMonths(m);
-
-          // ユニーク年を抽出して降順に
-          const ys = Array.from(new Set(m.map((s) => s.slice(0, 4)))).sort().reverse();
-          setYears(ys);
-
-          // 取得データに今年がなければ年フィルタは「すべて」にフォールバック
-          if (!ys.includes(thisYear)) {
-            setSelectedYear('');
-          }
+          setMonths(data.months || []);
         }
       })
       .catch((err) => {
         console.error('フィルター情報取得エラー:', err);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ページ計算（最大7件ウィンドウ）
+  // ページ計算
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const windowSize = 7;
   const half = Math.floor(windowSize / 2);
@@ -124,11 +122,6 @@ const ListPage: React.FC = () => {
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [totalPages]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // 選択された年に属する月だけを候補に出す
-  const monthsForSelectedYear = selectedYear
-    ? months.filter((m) => m.startsWith(`${selectedYear}-`)).map((m) => m.slice(5, 7)) // "MM"
-    : Array.from(new Set(months.map((m) => m.slice(5, 7)))).sort(); // 年未選択なら全月ユニーク
 
   return (
     <div className="wrap page-list">
@@ -150,6 +143,16 @@ const ListPage: React.FC = () => {
               }}
               className="title-search"
             />
+            {/* <div className="search-icon flex-center">
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="pointer fsz-12"
+                onClick={() => {
+                  setSearchTitle(searchTitleInput);
+                  setPage(1);
+                }}
+              />
+            </div> */}
           </div>
 
           {/* 修正内容検索 */}
@@ -167,9 +170,17 @@ const ListPage: React.FC = () => {
               }}
               className="title-search"
             />
+            {/* <div className="search-icon flex-center">
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="pointer fsz-12"
+                onClick={() => {
+                  setSearchKeyword(searchKeywordInput);
+                  setPage(1);
+                }}
+              />
+            </div> */}
           </div>
-
-          {/* 作成者フィルタ */}
           <select
             value={selectedAuthor}
             onChange={(e) => {
@@ -186,25 +197,6 @@ const ListPage: React.FC = () => {
             ))}
           </select>
 
-          {/* 年フィルタ（既定: 今年。存在しなければ「すべて」） */}
-          <select
-            value={selectedYear}
-            onChange={(e) => {
-              setSelectedYear(e.target.value);
-              setSelectedMonth(''); // 年を変えたら月は「すべて」に戻す
-              setPage(1);
-            }}
-            className="year-filter"
-          >
-            <option value="">すべての年</option>
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}年
-              </option>
-            ))}
-          </select>
-
-          {/* 月フィルタ（MM）。年が選ばれていればその年の月のみ */}
           <select
             value={selectedMonth}
             onChange={(e) => {
@@ -213,61 +205,70 @@ const ListPage: React.FC = () => {
             }}
             className="month-filter"
           >
-            <option value="">すべての月</option>
-            {monthsForSelectedYear.map((mm) => {
-              const mNum = parseInt(mm, 10); // "08" → 8
-              return (
-                <option key={`${selectedYear || 'all'}-${mm}`} value={mm}>
-                  {mNum}月
-                </option>
-              );
-            })}
+            <option value="">すべての年月</option>
+            {months.map((month) => (
+              <option key={month} value={month}>
+                {month}
+              </option>
+            ))}
           </select>
 
-          {/* 並び順 */}
+          {/* <div className="flex-center gap-5 bg-lightgray pointer px-10 py-2 rounded fsz-10">
+            <FontAwesomeIcon
+              icon={faSearch}
+              className="pointer fsz-12"
+              onClick={() => {
+                setSearchTitle(searchTitleInput);
+                setPage(1);
+              }}
+            />検索
+          </div> */}
           <div
             className="flex items-center gap-5 pointer"
             onClick={() => {
-              setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+              setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
               setPage(1);
             }}
           >
             <FontAwesomeIcon icon={faSort} />
             <span className="fsz-11">{sortOrder === 'asc' ? '古い順' : '新しい順'}</span>
           </div>
-
-          <div className="fsz-14 text-gray mb-2 ml-auto mr-10">{total}件</div>
+          <div className="fsz-14 text-gray mb-2 ml-auto mr-10">
+            {total}件
+          </div>
         </div>
 
         <ul className="card-list">
           {items.map((item) => (
             <li className="card-list__item" key={item.id}>
-              <a href={`${env.appUrl}/${item.id}`} className="card-list__item-inner">
+              <a
+                href={`${env.appUrl}/${item.id}`}
+                className="card-list__item-inner"
+              >
                 <div className="card-list__image mb-5">
-                  {item.image ? (
-                    (() => {
-                      const date = new Date(item.created_at);
-                      const Y = date.getFullYear().toString();
-                      const mm = ('0' + (date.getMonth() + 1)).slice(-2);
-                      const src = `${env.serverUrl}/uploads/${Y}/${mm}/${item.id}/${item.image}`;
-                      return (
-                        <img
-                          src={src}
-                          alt=""
-                          className="object-fit object-cover object-top rounded"
-                          onError={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            img.onerror = null;
-                            img.style.display = 'none';
-                            const fallback = document.createElement('div');
-                            fallback.textContent = '(˙◁˙)';
-                            fallback.className = 'text-lightgray fsz-20';
-                            img.parentNode?.appendChild(fallback);
-                          }}
-                        />
-                      );
-                    })()
-                  ) : (
+                  {item.image ? (() => {
+                    const date = new Date(item.created_at);
+                    const Y = date.getFullYear().toString();
+                    const mm = ('0' + (date.getMonth() + 1)).slice(-2);
+                    const src = `${env.serverUrl}/uploads/${Y}/${mm}/${item.id}/${item.image}`;
+
+                    return (
+                      <img
+                        src={src}
+                        alt=""
+                        className="object-fit object-cover object-top rounded"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.onerror = null;
+                          img.style.display = 'none';
+                          const fallback = document.createElement('div');
+                          fallback.textContent = '(˙◁˙)';
+                          fallback.className = 'text-lightgray fsz-20';
+                          img.parentNode?.appendChild(fallback);
+                        }}
+                      />
+                    );
+                  })() : (
                     <div className="text-lightgray fsz-20">(·_·)</div>
                   )}
                 </div>
@@ -283,7 +284,6 @@ const ListPage: React.FC = () => {
           ))}
         </ul>
 
-        {/* ページネーション（7件ウィンドウ＋前後） */}
         <div className="pagination mt-20">
           <button
             type="button"
@@ -317,6 +317,7 @@ const ListPage: React.FC = () => {
             &gt;
           </button>
         </div>
+
       </div>
       <Footer />
     </div>
